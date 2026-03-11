@@ -1,0 +1,185 @@
+@import url(/css/variables.css);
+@import url(/css/preloader.css);
+
+body{
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    min-height: 100vh;
+    font-family: var(--font), sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+main {
+    flex: 1;
+}
+
+h1 {
+    font-size: clamp(1rem, 0.9756rem + 1.1707vw, 2rem);
+}
+
+h2, h3{
+    margin-block: 10px;
+}
+
+h2 {
+    font-size: clamp(1rem, 0.8171rem + 0.7805vw, 1.5rem);
+    text-align: center;
+}
+
+h3 {
+    display: flex;
+    justify-content: baseline;
+    align-items: center;
+    gap: 10px;
+    font-size: clamp(0.875rem, 0.7607rem + 0.4878vw, 1.1875rem);
+}
+
+@media (max-width: 499px){
+    h2, h3 {
+        text-align: center;
+        justify-content: center;
+    }
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+input {
+    min-width: 20%;
+    border: 1px solid var(--header-bg-color);
+    border-radius: 5px;
+    padding: 5px 10px;
+}
+
+select {
+    border: 1px solid var(--header-bg-color);
+    border-radius: 5px;
+    padding: 5px 10px;
+}
+
+.btn {
+    padding: 2px 5px;
+    border: 1px solid var(--header-bg-color);
+    border-radius: 5px;
+    background-color: var(--bg-color);
+    color: var(--header-bg-color);
+    cursor: pointer;
+}
+
+.block_wrapper{
+    border-radius: 12px;
+    background-color: var(--block-bg-color);
+    padding: 15px 30px;
+}
+
+@media (max-width: 699px){
+    .block_wrapper{
+        padding: 15px;
+    }
+}
+
+.container{
+    width: 100%;
+    max-width: 1472px;
+    padding-inline: 16px;
+    display: flex;
+    margin: 0 auto;
+}
+
+.header{
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding-block: 5px;
+    align-items: center;
+    background-color: var(--header-bg-color);
+    border-radius: 5px;
+    color: #FFFFFF;
+    font-size: clamp(0.625rem, 0.4878rem + 0.5854vw, 1rem);
+}
+/*---------- */
+
+.wrapper{
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
+    padding-inline: 16px;
+    width: 100%;
+}
+
+.wrapper p{
+    font-size: 1rem;
+}
+
+.title{
+    text-align: center;
+    color: var(--link-color);
+    margin-block: 20px;
+}
+
+@media (max-width: 649px){
+    .title{
+        margin-block: 0;
+    }
+}
+
+/* Стили для флагов */
+.flag_red {
+    border-radius: 10px;
+    padding: 2px 5px;
+    background-color: #fabcbc;
+    font-weight: bold;
+}
+
+.flag_yellow {
+    border-radius: 10px;
+    padding: 2px 5px;
+    background-color: #fefe93;
+    font-weight: bold;
+}
+
+.flag_green {
+    border-radius: 10px;
+    padding: 2px 5px;
+    background-color: #b5fdb5;
+    font-weight: bold;
+}
+
+.flag_no_survey {
+    border-radius: 10px;
+    padding: 2px 5px;
+    background-color: #e0e0e0;
+    font-style: italic;
+}
+
+@media (max-width: 649px){
+
+}
+
+@media (max-width: 499px){
+
+}
+
+.content {
+    flex: 1;
+}
+
+.footer{
+    width: 100%;
+    margin-top: 10px;
+    padding-block: 5px;
+    align-items: center;
+    background-color: var(--header-bg-color);
+    border-radius: 5px;
+    color: #FFFFFF;
+    font-size: clamp(0.625rem, 0.4878rem + 0.5854vw, 1rem);
+}
+
+.footer__list{
+    display: flex;
+    justify-content: space-between;
+    column-gap: 20px;
+}

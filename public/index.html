@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/normalize.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/index.css">
+    <script src="/js/index.js" defer></script>
+    <script src="/js/downloader.js" defer></script>
+    <script src="/js/auth.js" defer></script>
+    <title>TeleMedBot</title>
+</head>
+<body>
+    <div class="preloader">
+        <div class="preloader__container">
+            <div class="preloader__logo"><img src="/image/header/logo.svg" alt="sechenov's logo" width="97"></div>
+            <div class="preloader__text">
+                <p class="preloader__text--text">Загрузка</p>
+                <div class="preloader__icons">
+                    <img class="preloader__icon" src="/image/preloader/icons.png" alt="point icon" width="20px" height="20px">
+                    <img class="preloader__icon" src="/image/preloader/icons.png" alt="point icon" width="20px" height="20px">
+                    <img class="preloader__icon" src="/image/preloader/icons.png" alt="point icon" width="20px" height="20px">
+                    <img class="preloader__icon" src="/image/preloader/icons.png" alt="point icon" width="20px" height="20px">
+                    <img class="preloader__icon" src="/image/preloader/icons.png" alt="point icon" width="20px" height="20px">
+                </div>
+            </div>
+        </div>
+    </div>
+    <header class="container header">
+        <a class="header__logo" href="/"><img src="/image/header/logo.png" alt="sechenov's logo" width="97"></a>
+    </header>
+    <div class="container">
+        <div class="wrapper">
+            <div class="title" id="title"><h1><span class="title_hide">Информационная система удаленного мониторинга субъективного состояния пациентов с помощью персональных менеджеров - </span>ТелеМедБот</h1></div>
+            <div class="common_info">
+                <div class="common_info_title">
+                    <h2>Общая информация</h2>
+                </div>
+                <div class="common_info_main">
+                    <div class="comomon_info_block common_info_hide">
+                        <h3 class="common_info_name">Всего пациентов:</h3>
+                        <div class="common_info_value" id="totalUsers">0</div>
+                    </div>
+                    <div class="comomon_info_block common_info_hide">
+                        <h3 class="common_info_name">Активных пациентов:</h3>
+                        <div class="common_info_value" id="activeUsers">0</div>
+                    </div>
+                    <div class="comomon_info_block common_info_hide">
+                        <h3 class="common_info_name">Опросов на сегодня:</h3>
+                        <div class="common_info_value" id="todaySurveys">0</div>
+                    </div>
+                    <div class="comomon_info_block">
+                        <h3 class="common_info_name">Красных флагов:</h3>
+                        <div class="common_info_value flag_red" id="redFlags">0</div>
+                    </div>
+                    <div class="comomon_info_block">
+                        <h3 class="common_info_name">Желтых флагов:</h3>
+                        <div class="common_info_value flag_yellow" id="yellowFlags">0</div>
+                    </div>
+                    <div class="comomon_info_block">
+                        <h3 class="common_info_name">Зеленых флагов:</h3>
+                        <div class="common_info_value flag_green" id="greenFlags">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="users_table">
+                <div class="users_table_title">
+                    <h2>Таблица активных пациентов</h2>
+                </div>
+                <div class="users_table_search">
+                    <input type="text" name="Поиск по пациентам" id="usersActiveTableSearch" placeholder="Введите логин">
+                    <select name="Фильтр по флагам" id="flagFilter">
+                        <option value="all">Все пациенты</option>
+                        <option value="no-survey">Без опросника</option>
+                        <option value="red">Красный флаг</option>
+                        <option value="yellow">Желтый флаг</option>
+                        <option value="green">Зеленый флаг</option>                        
+                    </select>
+                </div>
+                <div class="users_table_main">
+                    <table class="users_table_content">
+                        <thead>
+                            <tr>
+                                <th class="users_table_info">Имя пользователя</th>
+                                <th class="users_table_info users_table_hide">Дата окончания</th>
+                                <th class="users_table_info users_table_hide">Дней осталось</th>
+                                <th class="users_table_info">Балл сегодня</th>
+                                <th class="users_table_flags" >Флаг сегодня</th>
+                                <th class="users_table_flags" id="usersTableFlag1"></th>
+                                <th class="users_table_flags" id="usersTableFlag2"></th>
+                                <th class="users_table_flags" id="usersTableFlag3"></th>
+                                <th class="users_table_flags" id="usersTableFlag4"></th>
+                                <th class="users_table_flags" id="usersTableFlag5"></th>
+                                <th class="users_table_flags" id="usersTableFlag6"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersActiveTable">
+                            <!-- Данные должны быть загружены через JavaScript -->
+                        </tbody>
+                    </table>
+                    <div class="pagination" id="activePagination">
+                        <!-- Пагинация через JavaScript -->
+                    </div>
+                </div>
+            </div>
+            <div class="users_table">
+                <div class="users_table_title">
+                    <h2>Таблица завершивших наблюдение</h2>
+                </div>
+                <div class="users_table_search">
+                    <input type="text" name="Поиск по пациентам" id="usersInactiveTableSearch" placeholder="Введите логин">
+                </div>
+                <div class="users_table_main">
+                    <table class="users_table_content">
+                        <thead>
+                            <tr>
+                                <th>Имя пользователя</th>
+                                <th>Дата окончания наблюдения</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersInactiveTable">
+                            <!-- Данные должны быть загружены через JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="users_table">
+                <div class="users_table_title">
+                    <h2>Выгрузка базы данных</h2>
+                </div>
+                <div class="export_section">
+                    <div class="export_options">
+                        <div class="export_option_group">
+                            <h3>Выбор пользователей:</h3>
+                            <label class="export_option">
+                                <input type="radio" name="userSelection" value="selected" id="exportSelectedUsers" checked>
+                                <span>Выбранные пользователи</span>
+                            </label>
+                            <label class="export_option">
+                                <input type="radio" name="userSelection" value="all" id="exportAllUsers">
+                                <span>Все пользователи</span>
+                            </label>
+                        </div>
+                        
+                        <div class="export_option_group" id="selectedUsersList" style="display: none;">
+                            <h3>Список выбранных пользователей:</h3>
+                            <div class="selected_users_container">
+                                <div class="selected_users_header">
+                                    <label class="export_option">
+                                        <input type="checkbox" id="selectAllUsers" checked>
+                                        <span>Выбрать всех</span>
+                                    </label>
+                                    <span class="selected_count" id="selectedUsersCount">0 выбрано</span>
+                                </div>
+                                <div class="selected_users_scroll" id="usersCheckboxList">
+                                    <!-- Список пользователей будет загружен через JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="export_option_group">
+                            <h3>Фильтр по статусу:</h3>
+                            <label class="export_option">
+                                <input type="radio" name="statusFilter" value="all" id="exportStatusAll" checked>
+                                <span>Все пользователи</span>
+                            </label>
+                            <label class="export_option">
+                                <input type="radio" name="statusFilter" value="active" id="exportStatusActive">
+                                <span>Только активные</span>
+                            </label>
+                            <label class="export_option">
+                                <input type="radio" name="statusFilter" value="inactive" id="exportStatusInactive">
+                                <span>Только неактивные</span>
+                            </label>
+                        </div>
+                        
+                        <div class="export_option_group">
+                            <h3>Формат выгрузки:</h3>
+                            <label class="export_option">
+                                <input type="radio" name="exportFormat" value="csv" id="exportFormatCSV" checked>
+                                <span>CSV (для Excel)</span>
+                            </label>
+                            <label class="export_option">
+                                <input type="radio" name="exportFormat" value="json" id="exportFormatJSON">
+                                <span>JSON</span>
+                            </label>
+                        </div>
+                        
+                        <div class="export_option_group">
+                            <h3>Дополнительные опции:</h3>
+                            <label class="export_option">
+                                <input type="checkbox" id="includeEmptySurveys" checked>
+                                <span>Включать дни без опросов</span>
+                            </label>
+                            <label class="export_option">
+                                <input type="checkbox" id="includeSurveyDetails" checked>
+                                <span>Включать детали опросов (вопросы и ответы)</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="export_actions">
+                        <button class="btn btn-primary" id="exportButton" onclick="exportData()">
+                            Скачать данные
+                        </button>
+                        <div class="export_progress" id="exportProgress" style="display: none;">
+                            <div class="progress_bar">
+                                <div class="progress_fill" id="exportProgressFill"></div>
+                            </div>
+                            <span id="exportProgressText">Подготовка данных...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer class="container footer">
+        <ul class="footer__list">
+            <li class="footer__item">Кафедра Госпитальной терапии №1 Сеченовского Университета</li>
+            <li class="footer__item">Телефон: <a href="tel:+79998305785">+79998305785</a></li>
+            <li class="footer__item">Почта: <a href="mailto:emelyanov_a_v@staff.sechenov.ru">emelyanov_a_v@staff.sechenov.ru</a></li>
+        </ul>
+    </footer>
+</body>
+</html>

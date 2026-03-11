@@ -1,0 +1,519 @@
+
+/* Общие стили для статистики */
+.stats_info_list {
+    display: flex;
+    justify-content: space-evenly;
+    gap: 15px;
+}
+
+.stats_title {
+    text-align: center;
+}
+
+.stats_value {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    text-align: center;
+}
+
+/* Контейнер для всего блока графиков */
+.graphs_wrappper {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden; /* Предотвращаем выход контента за пределы */
+    box-sizing: border-box;
+}
+
+/* Панель вопросов */
+.questions-panel {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 5px;
+    border: 1px solid var(--text-color);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.questions-panel-header {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .questions-panel-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+.questions-panel-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    word-wrap: break-word;
+}
+
+.questions-panel-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Список вопросов - ограничиваем высоту, но ширина в пределах контейнера */
+.questions-list {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden; /* Убираем горизонтальный скролл в списке вопросов */
+    padding: 10px;
+    background: white;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.question-item {
+    padding: 8px 10px;
+    border-bottom: 1px solid #eee;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.question-item:last-child {
+    border-bottom: none;
+}
+
+.question-item:hover {
+    background: #f0f0f0;
+}
+
+.question-item label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    width: 100%;
+}
+
+.question-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    flex-shrink: 0; /* Предотвращаем сжатие чекбокса */
+}
+
+.question-item .question-text {
+    word-break: break-word; /* Перенос длинных слов */
+    overflow-wrap: break-word;
+}
+
+/* Контейнер таблицы - здесь будет появляться горизонтальный скролл */
+.questions-table-container {
+    margin-top: 20px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Обертка для таблицы с горизонтальной прокруткой */
+.answers-table-wrapper {
+    overflow-x: auto;
+    overflow-y: visible;
+    border: 1px solid var(--text-color);
+    border-radius: 5px;
+    margin-bottom: 15px;
+    width: 100%;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch; /* Плавный скролл на мобильных */
+}
+
+/* Таблица ответов */
+.answers-table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 800px;
+    table-layout: auto;
+}
+
+.answers-table th {
+    background: #f0f0f0;
+    padding: 12px 8px;
+    text-align: center;
+    font-weight: bold;
+    border: 1px solid var(--text-color);
+    white-space: nowrap; /* Запрещаем перенос в заголовках */
+}
+
+.answers-table td {
+    padding: 10px 8px;
+    border: 1px solid var(--text-color);
+    vertical-align: middle;
+    height: auto;
+    min-height: 50px;
+}
+
+/* Колонка с вопросами */
+.question-column {
+    min-width: 250px;
+    width: 250px;
+    max-width: 250px;
+    background: #fafafa;
+    font-weight: 500;
+    text-align: left;
+    position: sticky;
+    left: 0;
+    background-color: white;
+    z-index: 1;
+    white-space: normal;
+    word-break: break-word;
+    padding: 12px 8px;
+}
+
+.answers-table th:first-child,
+.answers-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+}
+
+.answers-table th:first-child {
+    background-color: #f0f0f0;
+    z-index: 3;
+}
+
+.answers-table td:first-child {
+    background-color: white;
+}
+
+/* Колонки с датами */
+.date-column {
+    min-width: 120px;
+    width: 120px;
+    max-width: 120px;
+    text-align: center;
+    background: #f5f5f5;
+    white-space: nowrap;
+}
+
+/* Ячейки с ответами */
+.answer-cell {
+    text-align: center;
+    transition: background-color 0.2s;
+    white-space: normal;
+    word-break: break-word;
+    overflow: hidden;
+    min-width: 120px;
+    max-width: 120px;
+    padding: 10px 8px;
+    line-height: 1.4;
+}
+
+.answer-cell:hover {
+    white-space: normal; /* При наведении показываем полный текст */
+    word-break: break-word;
+    background-color: inherit;
+    box-shadow: none;
+    filter: brightness(1);
+}
+
+/* Цвета для флагов */
+.answer-cell.flag-green {
+    background-color: rgba(76, 175, 80, 0.15);
+}
+
+.answer-cell.flag-yellow {
+    background-color: rgba(255, 193, 7, 0.15);
+}
+
+.answer-cell.flag-red {
+    background-color: rgba(244, 67, 54, 0.15);
+}
+
+/* Легенда */
+.table-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 15px;
+    padding: 10px 15px;
+    background: #f5f5f5;
+    border-radius: 5px;
+    border: 1px solid var(--text-color);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
+.legend-color.flag-green {
+    background-color: rgba(76, 175, 80, 0.3);
+}
+
+.legend-color.flag-yellow {
+    background-color: rgba(255, 193, 7, 0.3);
+}
+
+.legend-color.flag-red {
+    background-color: rgba(244, 67, 54, 0.3);
+}
+
+/* Кнопки */
+.btn.small-btn {
+    padding: 5px 10px;
+    font-size: 0.9rem;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn.small-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.btn.primary-btn {
+    background: #4CAF50;
+    color: white;
+    border: 1px solid #45a049;
+}
+
+.btn.primary-btn:hover {
+    background: #45a049;
+}
+
+/* Сообщения */
+.no-questions-selected,
+.no-data-message,
+.error-message {
+    padding: 30px 20px;
+    text-align: center;
+    background: #f5f5f5;
+    border-radius: 5px;
+    border: 1px solid var(--text-color);
+    color: #666;
+    font-size: 1rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    word-wrap: break-word;
+}
+
+.error-message {
+    color: #f44336;
+    background: #ffebee;
+    border-color: #f44336;
+}
+
+/* Индикатор загрузки */
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: #f5f5f5;
+    border-radius: 5px;
+    border: 1px solid var(--text-color);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--text-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+    flex-shrink: 0;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .graphs_wrappper {
+        padding: 0;
+    }
+    
+    .questions-panel-header h3 {
+        font-size: 1rem;
+    }
+    
+    .questions-list {
+        max-height: 250px;
+    }
+    
+    .question-item label {
+        font-size: 0.9rem;
+    }
+    
+    .answers-table {
+        min-width: 600px;
+    }
+    
+    .question-column {
+        min-width: 200px;
+        width: 200px;
+        max-width: 200px;
+    }
+    
+    .date-column {
+        min-width: 100px;
+        width: 100px;
+        max-width: 100px;
+    }
+
+    .answer-cell {
+        max-width: 100px;
+        min-width: 100px;
+        font-size: 0.9rem;
+        padding: 8px 4px;
+    }
+    
+    .legend-item {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .questions-panel {
+        padding: 10px;
+    }
+    
+    .questions-panel-controls {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn.small-btn,
+    .btn.primary-btn {
+        width: 100%;
+        white-space: normal; /* Разрешаем перенос текста на кнопках */
+    }
+    
+    /* Еще уменьшаем минимальную ширину таблицы */
+    .answers-table {
+        min-width: 500px;
+    }
+    
+    .question-column {
+        min-width: 150px;
+        width: 150px;
+        max-width: 150px;
+    }
+    
+    .date-column {
+        min-width: 90px;
+        width: 90px;
+        max-width: 90px;
+    }
+    
+    .answers-table th,
+    .answers-table td {
+        padding: 8px 4px;
+        font-size: 0.9rem;
+    }
+    
+    .answer-cell {
+        max-width: 90px;
+        min-width: 90px;
+        font-size: 0.85rem;
+        padding: 6px 3px;
+    }
+    
+    .table-legend {
+        gap: 10px;
+        padding: 8px 10px;
+    }
+}
+
+/* Дополнительные улучшения */
+.graphs_wrappper {
+    transition: all 0.3s ease;
+}
+
+/* Стили для выделения при наведении */
+.answer-cell:hover {
+    filter: brightness(0.95);
+}
+
+/* Стили для скроллбара */
+.questions-list::-webkit-scrollbar,
+.answers-table-wrapper::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.questions-list::-webkit-scrollbar-track,
+.answers-table-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.questions-list::-webkit-scrollbar-thumb,
+.answers-table-wrapper::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.questions-list::-webkit-scrollbar-thumb:hover,
+.answers-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Фикс для sticky колонок в Firefox */
+@supports (position: sticky) {
+    .answers-table th:first-child,
+    .answers-table td:first-child {
+        position: sticky;
+        left: 0;
+    }
+}
+
+/* Дополнительный фикс для предотвращения горизонтального скролла страницы */
+body {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+}
+
+.container {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.wrapper {
+    max-width: 100%;
+    overflow-x: hidden;
+}

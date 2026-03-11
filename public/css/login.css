@@ -1,0 +1,9 @@
+.login_form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.login_btn {
+    max-width: 30%;
+}

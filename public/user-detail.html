@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/normalize.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/user-detail.css">
+    <script src="js/auth.js" defer></script>
+    <script src="/js/user-detail.js" defer></script>
+</head>
+<body>
+    <div class="preloader">
+        <div class="preloader__container">
+            <div class="preloader__logo"><img src="/image/header/logo.svg" alt="sechenov's logo" width="97"></div>
+            <div class="preloader__text">
+                <p class="preloader__text--text">Загрузка</p>
+                <div class="preloader__icons">
+                    <img class="preloader__icon" src="/image/preloader/icons.png" alt="point icon" width="20px" height="20px">
+                    <img class="preloader__icon" src="/image/preloader/icons.png" alt="point icon" width="20px" height="20px">
+                    <img class="preloader__icon" src="/image/preloader/icons.png" alt="point icon" width="20px" height="20px">
+                    <img class="preloader__icon" src="/image/preloader/icons.png" alt="point icon" width="20px" height="20px">
+                    <img class="preloader__icon" src="/image/preloader/icons.png" alt="point icon" width="20px" height="20px">
+                </div>
+            </div>
+        </div>
+    </div>
+    <header class="container header">
+        <div class="header_logo">
+            <a class="header_logo_link" href="/"><img src="/image/header/logo.png" alt="sechenov's logo" width="97"></a>
+        </div>
+        <div class="back_btn">
+            <a href="/index.html">На главную страницу</a>
+        </div>
+    </header>
+    <div class="container">
+        <div class="wrapper">
+            <div class="loading" id="loading">
+                <p>Загрузка данных...</p>
+            </div>
+            <div class="user_info" id="content" style="display: none;">
+                <div class="title" id="title"><h1>Детали пользователя</h1></div>
+                <div class="user_info_main">
+                    <div class="user_info_item">
+                        <label>Логин:</label>
+                        <span id="userName">-</span>
+                    </div>
+                    <div class="user_info_item">
+                        <label>Статус:</label>
+                        <span id="userStatus">-</span>
+                    </div>
+                    <div class="user_info_item">
+                        <label>Период наблюдения:</label>
+                        <span id="observationPeriod">-</span>
+                    </div>
+                    <div class="user_info_item">
+                        <label>Дата окончания:</label>
+                        <span id="endDate">-</span>
+                    </div>
+                    <div class="user_info_item">
+                        <label>Дней осталось:</label>
+                        <span id="daysRemaining">-</span>
+                    </div>
+                </div>
+                <div class="change_period">
+                    <h3>Изменить период наблюдения</h3>
+                    <div class="change_period_main">
+                        <input type="number" id="newMonths" min="1" max="60" placeholder="Количество месяцев">
+                        <button type="submit" onclick="updatePeriod()" class="period_btn btn">Обновить</button>
+                    </div>
+                </div>
+            </div>
+            <div class="stats_info">
+                <div class="stats_info_title">
+                    <h2>Общая статистика</h2>
+                </div>
+                <div class="stats_info_list" id="statsView">
+                    <div class="stats_item">
+                        <h3 class="stats_title">Всего опросов</h3>
+                        <div class="stats_value" id="totalSurveys">0</div>
+                    </div>
+                    <div class="stats_item">
+                        <h3 class="stats_title">Средний балл</h3>
+                        <div class="stats_value" id="avgScore">0</div>
+                    </div>
+                    <div class="stats_item">
+                        <h3 class="stats_title">Зеленых флагов</h3>
+                        <div class="stats_value flag_green" id="greenFlags">0</div>
+                    </div>
+                    <div class="stats_item">
+                        <h3 class="stats_title">Желтых флагов</h3>
+                        <div class="stats_value flag_yellow" id="yellowFlags">0</div>
+                    </div>
+                    <div class="stats_item">
+                        <h3 class="stats_title">Красных флагов</h3>
+                        <div class="stats_value flag_red" id="redFlags">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="graphs" id="graphs">
+                <h2 class="graphs_title">Опросники по дням</h2>
+                <div class="graphs_wrappper" id="graphsWrapper">
+                    <!--Здесь должен отображаться график по вопросам-->
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer class="container footer">
+        <ul class="footer__list">
+            <li class="footer__item">Кафедра Госпитальной терапии №1 Сеченовского Университета</li>
+            <li class="footer__item">Телефон: <a href="tel:+79998305785">+79998305785</a></li>
+            <li class="footer__item">Почта: <a href="mailto:emelyanov_a_v@staff.sechenov.ru">emelyanov_a_v@staff.sechenov.ru</a></li>
+        </ul>
+    </footer>
+</body>
+</html>

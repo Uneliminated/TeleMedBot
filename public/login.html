@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/normalize.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/login.css">
+    <script src="/js/auth.js" defer></script>
+    <title>Авторизация</title>
+</head>
+<body>
+    <div class="preloader">
+        <div class="preloader__container">
+            <div class="preloader__logo"><img src="/image/header/logo.svg" alt="sechenov's logo" width="97"></div>
+            <div class="preloader__text">
+                <p class="preloader__text--text">Загрузка</p>
+                <div class="preloader__icons">
+                    <img class="preloader__icon" src="/image/preloader/icons.png" alt="point icon" width="20px" height="20px">
+                    <img class="preloader__icon" src="/image/preloader/icons.png" alt="point icon" width="20px" height="20px">
+                    <img class="preloader__icon" src="/image/preloader/icons.png" alt="point icon" width="20px" height="20px">
+                    <img class="preloader__icon" src="/image/preloader/icons.png" alt="point icon" width="20px" height="20px">
+                    <img class="preloader__icon" src="/image/preloader/icons.png" alt="point icon" width="20px" height="20px">
+                </div>
+            </div>
+        </div>
+    </div>
+    <header class="container header">
+        <a class="header__logo" href="/"><img src="/image/header/logo.png" alt="sechenov's logo" width="97"></a>
+    </header>
+    <div class="container">
+        <div class="wrapper">
+            <div class="title" id="title"><h1>Страница авторизации</h1></div>
+            
+            <div class="error_message" id="errorMessage" style="display: none">
+                <span id="errorText">Неверные учетные данные</span>
+            </div>
+            <div class="login_box">
+                <form class="login_form" id="loginForm">
+                    <div class="form_block form_login">
+                        <label for="username">
+                            Имя пользователя
+                        </label>
+                        <input 
+                            type="text"
+                            id="username"
+                            name="username"
+                            placeholder="Имя пользователя"
+                            required
+                            autocomplete="username"    
+                        >
+                    </div>
+
+                    <div class="form_block form_password">
+                        <label for="password">Пароль</label>
+                        <input 
+                            type="text"
+                            id="password"
+                            name="password"
+                            placeholder="Пароль"
+                            required
+                            autocomplete="password"
+                        >
+                    </div>
+
+                    <button type="submit" class="btn login_btn" id="loginButton">Войти в систему</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <footer class="container footer">
+        <ul class="footer__list">
+            <li class="footer__item">Кафедра Госпитальной терапии №1 Сеченовского Университета</li>
+            <li class="footer__item">Телефон: <a href="tel:+79998305785">+79998305785</a></li>
+            <li class="footer__item">Почта: <a href="mailto:emelyanov_a_v@staff.sechenov.ru">emelyanov_a_v@staff.sechenov.ru</a></li>
+        </ul>
+    </footer>
+</body>
+</html>
