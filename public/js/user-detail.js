@@ -1,12 +1,11 @@
 let userId = null
-let chart = null
 let userRegistrationDate = null
 let userEndDate = null
 let isUserActive = false
-let scrollPosition = 0;
 let allQuestions = []
 let selectedQuestions = []
 let allSurveyDates = []
+
 const QUESTION_ORDER = [
     "Как вы себя чувствуете?",
     "Есть ли у вас признаки ОРВИ?",
@@ -26,40 +25,42 @@ const QUESTION_ORDER = [
     "Какой у вас сегодня пульс?"
 ]
 
-//Получение ID пользователя из URL
+// Получение ID пользователя из URL
 function getUserIdFromUrl() {
     const urlParams = new URLSearchParams(window.location.search)
     return urlParams.get('id')
 }
 
-//Форматирование даты в строку для отображения
-function formateDateForDisplay(date) {
+// Получение сегодняшней даты в формате YYYY-MM-DD
+function getTodayString() {
     const today = new Date()
-    today.setHours(0,0,0,0)
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
+// Форматирование даты для отображения
+function formatDateForDisplay(dateString) {
+    if (!dateString) return ''
     
-    const compareDate = new Date(date)
-    compareDate.setHours(0,0,0,0)
-
-    if (compareDate.getTime() === today.getTime()) {
+    const today = getTodayString()
+    
+    if (dateString === today) {
         return 'Сегодня'
-    } else {
-        return date.toLocaleDateString('ru-RU', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        })
     }
+    
+    const [year, month, day] = dateString.split('-')
+    const date = new Date(year, month - 1, day)
+    
+    return date.toLocaleDateString('ru-RU', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    })
 }
 
-//Форматирование даты для запроса к API (YYYY-MM-DD)
-function formateDateForAPI(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-//Загрузка данных пользователя
+// Загрузка данных пользователя
 async function loadUserData() {
     userId = getUserIdFromUrl()
 
@@ -67,7 +68,7 @@ async function loadUserData() {
         const loadingElement = document.getElementById('loading')
         if (loadingElement) {
             loadingElement.innerHTML = `
-                <div>
+                <div class="error-container">
                     <p>ID пользователя не указан</p>
                     <a href="/index.html" class="btn">Вернуться к списку</a>
                 </div>
@@ -77,7 +78,7 @@ async function loadUserData() {
     }
 
     try {
-        //Загружаем основную информацию о пользователе
+        // Загружаем основную информацию о пользователе
         const response = await fetch(`/api/users/${userId}`)
         const data = await response.json()
 
@@ -89,24 +90,13 @@ async function loadUserData() {
 
         // Сохраняем дату регистрации пользователя
         if (data.user.registration_date) {
-            userRegistrationDate = new Date(data.user.registration_date)
-            userRegistrationDate.setHours(0,0,0,0)
-        } else {
-            userRegistrationDate = null
+            userRegistrationDate = data.user.registration_date
         }
 
-        // Сохраняем даты окончания наблюдения и статус активности
+        // Сохраняем дату окончания наблюдения и статус активности
         isUserActive = data.user.is_active || false
-        if (data.user.observation_end_date_formatted) {
-            const dateParts = data.user.observation_end_date_formatted.split('.')
-            if (dateParts.length === 3) {
-                userEndDate = new Date(
-                    parseInt(dateParts[2]),
-                    parseInt(dateParts[1]) - 1,
-                    parseInt(dateParts[0])
-                )
-                userEndDate.setHours(0,0,0,0)
-            }
+        if (data.user.observation_end_date) {
+            userEndDate = data.user.observation_end_date
         }
 
         renderUserInfo(data)
@@ -123,7 +113,7 @@ async function loadUserData() {
         const loadingElement = document.getElementById('loading')
         if (loadingElement) {
             loadingElement.innerHTML = `
-                <div>
+                <div class="error-container">
                     <p>Ошибка загрузки данных пользователя</p>
                     <p>${error.message}</p>
                     <a href="/index.html" class="btn">Вернуться к списку</a>
@@ -148,9 +138,9 @@ function renderUserInfo(data) {
 
     if (userStatusEl) {
         if (user.is_active) {
-            userStatusEl.innerHTML = `<span>Активен</span>`
+            userStatusEl.innerHTML = `<span class="status-active">Активен</span>`
         } else {
-            userStatusEl.innerHTML = `<span>Завершен</span>`
+            userStatusEl.innerHTML = `<span class="status-inactive">Завершен</span>`
         }
     }
 
@@ -172,7 +162,7 @@ function renderStatistics(stats) {
     const redFlagsEl = document.getElementById('redFlags')
 
     if (totalSurveysEl) totalSurveysEl.textContent = stats.total_surveys || 0
-    if (avgScoreEl) avgScoreEl.textContent = stats.avg_score ? stats.avg_score.toFixed(1) : '0.0'
+    if (avgScoreEl) avgScoreEl.textContent = stats.avg_score ? Number(stats.avg_score).toFixed(1) : '0.0'
     if (greenFlagsEl) greenFlagsEl.textContent = stats.green_count || 0
     if (yellowFlagsEl) yellowFlagsEl.textContent = stats.yellow_count || 0
     if (redFlagsEl) redFlagsEl.textContent = stats.red_count || 0
@@ -180,14 +170,11 @@ function renderStatistics(stats) {
 
 // Функция для сортировки вопросов в заданном порядке
 function sortQuestionsByOrder(questions) {
-    // Создаем карту для быстрого доступа к индексу
     const orderMap = new Map()
     QUESTION_ORDER.forEach((question, index) => {
         orderMap.set(question, index)
     })
     
-    // Сортируем вопросы согласно порядку из QUESTION_ORDER
-    // Все вопросы гарантированно есть в списке
     return questions.sort((a, b) => {
         return orderMap.get(a) - orderMap.get(b)
     })
@@ -201,16 +188,17 @@ async function loadQuestionsData() {
         const response = await fetch(`/api/users/${userId}/all-questions`)
         const data = await response.json()
         
-        if (data.questions) {
+        if (data.questions && data.questions.length > 0) {
             // Сортируем вопросы в заданном порядке
             allQuestions = sortQuestionsByOrder(data.questions)
             selectedQuestions = [...allQuestions]
-            renderQuestionsPanel()
         }
         
         if (data.dates) {
             allSurveyDates = data.dates
         }
+        
+        renderQuestionsPanel()
         
         // Если есть выбранные вопросы, обновляем таблицу
         if (selectedQuestions.length > 0) {
@@ -218,15 +206,19 @@ async function loadQuestionsData() {
         }
     } catch (error) {
         console.error('Ошибка загрузки вопросов:', error)
+        document.getElementById('graphsWrapper').innerHTML = `
+            <div class="error-message">
+                <p>Ошибка загрузки вопросов: ${error.message}</p>
+                <button class="btn small-btn" onclick="loadQuestionsData()">Повторить</button>
+            </div>
+        `
     }
 }
-
 
 function renderQuestionsPanel() {
     const graphsView = document.getElementById('graphsWrapper')
     if (!graphsView) return
     
-    // Создаем HTML для панели вопросов
     let html = `
         <div class="questions-panel">
             <div class="questions-panel-header">
@@ -240,8 +232,7 @@ function renderQuestionsPanel() {
             <div class="questions-list">
     `
     
-    // Используем отсортированный allQuestions
-    allQuestions.forEach((question, index) => {
+    allQuestions.forEach((question) => {
         const isSelected = selectedQuestions.includes(question)
         const orderNumber = QUESTION_ORDER.indexOf(question) + 1
         
@@ -251,7 +242,6 @@ function renderQuestionsPanel() {
                     <input type="checkbox" 
                            class="question-checkbox" 
                            value="${question.replace(/"/g, '&quot;')}"
-                           data-question-index="${index}"
                            ${isSelected ? 'checked' : ''}
                            onchange="handleQuestionCheckboxChange(this)">
                     <span class="question-text">
@@ -267,7 +257,10 @@ function renderQuestionsPanel() {
             </div>
         </div>
         <div class="questions-table-container" id="questionsTableContainer">
-            <!-- Здесь будет таблица с ответами -->
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Загрузка ответов...</p>
+            </div>
         </div>
     `
     
@@ -294,7 +287,6 @@ function selectAllQuestions() {
     updateQuestionsTable()
 }
 
-// Сбросить все вопросы
 function deselectAllQuestions() {
     selectedQuestions = []
     const checkboxes = document.querySelectorAll('.question-checkbox')
@@ -327,36 +319,23 @@ async function loadAnswersForQuestions() {
             </div>
         `
         
-        // Получаем сегодняшнюю дату
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
+        const today = getTodayString()
         
-        // Если нет даты регистрации, используем дату на месяц раньше
-        let startDate = userRegistrationDate 
-            ? new Date(userRegistrationDate) 
-            : new Date(today)
-        
-        if (!userRegistrationDate) {
-            startDate.setMonth(startDate.getMonth() - 1)
-        }
-        
-        // Убеждаемся, что startDate не больше today
-        if (startDate > today) {
-            startDate = new Date(today)
-            startDate.setMonth(startDate.getMonth() - 1)
-        }
-        
-        // Важно: добавляем +1 день к endDate, чтобы включить сегодняшние ответы
-        const endDate = new Date(today)
-        endDate.setDate(endDate.getDate() + 1) // Добавляем один день
+        // Определяем начальную дату
+        let startDate = userRegistrationDate || (() => {
+            const date = new Date()
+            date.setMonth(date.getMonth() - 1)
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const day = String(date.getDate()).padStart(2, '0')
+            return `${year}-${month}-${day}`
+        })()
         
         const requestBody = {
             questions: selectedQuestions,
-            startDate: startDate.toISOString().split('T')[0],
-            endDate: endDate.toISOString().split('T')[0] // Отправляем завтрашнюю дату
+            startDate: startDate,
+            endDate: today
         }
-        
-        console.log('Отправляем запрос:', requestBody) // Для отладки
         
         const response = await fetch(`/api/users/${userId}/answers-by-questions`, {
             method: 'POST',
@@ -371,14 +350,12 @@ async function loadAnswersForQuestions() {
         }
         
         const data = await response.json()
-        console.log('Получен ответ:', data) // Для отладки
         
-        // Проверяем, есть ли ответы
         if (!data.answers || data.answers.length === 0) {
             container.innerHTML = `
                 <div class="no-data-message">
                     <p>Нет данных за выбранный период</p>
-                    <p class="hint">Период: с ${requestBody.startDate} по ${today.toLocaleDateString('ru-RU')}</p>
+                    <p class="hint">Период: с ${startDate} по ${formatDateForDisplay(today)}</p>
                 </div>
             `
             return
@@ -419,9 +396,8 @@ function renderQuestionsTable(data) {
         return
     }
     
-    // Получаем все уникальные даты и сортируем их (от новых к старым или наоборот)
+    // Получаем все уникальные даты и сортируем их
     const allDates = [...new Set(data.answers.map(item => item.date))].sort()
-    console.log('Найденные даты:', allDates) // Для отладки
     
     // Группируем ответы по вопросам
     const answersByQuestion = {}
@@ -449,24 +425,17 @@ function renderQuestionsTable(data) {
         return orderMap.get(a) - orderMap.get(b)
     })
     
-    // Создаем таблицу
     let html = `
         <div class="answers-table-wrapper">
             <table class="answers-table">
                 <thead>
                     <tr>
-                        <th class="question-column">
-                            Вопрос 
-                        </th>
+                        <th class="question-column">Вопрос</th>
     `
     
     // Заголовки с датами
     allDates.forEach(date => {
-        const formattedDate = new Date(date).toLocaleDateString('ru-RU', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        })
+        const formattedDate = formatDateForDisplay(date)
         html += `<th class="date-column">${formattedDate}</th>`
     })
     
@@ -476,7 +445,6 @@ function renderQuestionsTable(data) {
                 <tbody>
     `
     
-    // Строки для каждого вопроса в отсортированном порядке
     let hasData = false
     
     sortedSelectedQuestions.forEach((question) => {
@@ -499,11 +467,11 @@ function renderQuestionsTable(data) {
             if (answerData) {
                 hasData = true
                 answerText = answerData.answer || '-'
-                // Добавляем класс флага для окраски ячейки
+                
                 if (answerData.flag) {
                     cellClass += ` flag-${answerData.flag}`
                 }
-                // Если есть баллы, отображаем их
+                
                 if (answerData.point !== undefined && answerData.point !== null) {
                     answerText += ` (${answerData.point})`
                 }
@@ -521,7 +489,6 @@ function renderQuestionsTable(data) {
         </div>
     `
     
-    // Если нет данных ни по одному вопросу
     if (!hasData) {
         container.innerHTML = `
             <div class="no-data-message">
@@ -588,27 +555,18 @@ async function updatePeriod() {
     }
 }
 
-//Вспомогательные функции
-function getFlagText(flag) {
-    switch(flag) {
-        case 'red': return 'Красный';
-        case 'yellow': return 'Желтый';
-        case 'green': return 'Зеленый';
-        default: return 'Неизвестно';
-    }
-}
-
-// Ожидаем загрузку DOM
+// Инициализация при загрузке страницы
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-        loadUserData();
-    });
+        loadUserData()
+    })
 } else {
-    // DOM уже загружен
-    loadUserData();
+    loadUserData()
 }
 
 window.addEventListener('load', () => {
     const preloader = document.querySelector('.preloader')
-    preloader.classList.add('hide')
+    if (preloader) {
+        preloader.classList.add('hide')
+    }
 })

@@ -64,9 +64,9 @@ db.prepare(`
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         telegram_id INTEGER UNIQUE NOT NULL,
         unique_name TEXT UNIQUE NOT NULL,
-        observation_months INTEGER NOT NULL DEFAULT 1, -- Период наблюдения в месяцах
+        observation_months INTEGER NOT NULL DEFAULT 1,
         created_at DATE DEFAULT (DATE('now')),
-        observation_end_date DATE -- Дата окончания наблюдения
+        observation_end_date DATE
     )
 `).run();
 
@@ -93,7 +93,7 @@ db.prepare(`
         username TEXT NOT NULL,
         survey_date DATE NOT NULL,
         final_score INTEGER DEFAULT 0,
-        final_flag TEXT NOT NULL, -- green, yellow, red
+        final_flag TEXT NOT NULL,
         created_at DATE,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
         UNIQUE(user_id, survey_date)
@@ -105,7 +105,7 @@ db.prepare(`
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
         date DATE NOT NULL,
-        status TEXT NOT NULL DEFAULT 'pending', -- pending, sent, completed, skipped
+        status TEXT NOT NULL DEFAULT 'pending',
         sent_at DATETIME,
         completed_at DATE,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
@@ -157,18 +157,18 @@ app.get('/api/stats', requireAuth, (req, res) => {
                         OR observation_end_date > date('now')`,
         completedSurveysToday: `SELECT COUNT(DISTINCT user_id) as count
                                 FROM survey_answers
-                                WHERE DATE(created_at) = DATE('now')`,
+                                WHERE answer_date = date('now')`,
         redFlagsToday: `SELECT COUNT(*) as count
                         FROM survey_results
-                        WHERE survey_date = DATE('now')
+                        WHERE survey_date = date('now')
                         AND final_flag = 'red'`,
         yellowFlagsToday: `SELECT COUNT(*) as count
                             FROM survey_results
-                            WHERE survey_date = DATE('now')
+                            WHERE survey_date = date('now')
                             AND final_flag = 'yellow'`,
         greenFLagsToday: `SELECT COUNT(*) as count
                             FROM survey_results
-                            WHERE survey_date = DATE('now')
+                            WHERE survey_date = date('now')
                             AND final_flag = 'green'`
     }
 
@@ -253,7 +253,7 @@ app.get('/api/users', requireAuth, (req,res) => {
             (SELECT final_flag FROM survey_results 
              WHERE user_id = u.id AND survey_date = '${dates[6]}') as flag_day6
         FROM users u
-        LEFT JOIN survey_results sr ON u.id = sr.user_id AND sr.survey_date = DATE('now')
+        LEFT JOIN survey_results sr ON u.id = sr.user_id AND sr.survey_date = date('now')
         ${whereClause}
     `
 
@@ -273,7 +273,7 @@ app.get('/api/users', requireAuth, (req,res) => {
     let countQuery = `
         SELECT COUNT(*) as total
         FROM users u
-        LEFT JOIN survey_results sr ON u.id = sr.user_id AND sr.survey_date = DATE('now')
+        LEFT JOIN survey_results sr ON u.id = sr.user_id AND sr.survey_date = date('now')
         ${whereClause}
     `
     if (flag === 'red') {
@@ -401,7 +401,7 @@ app.get('/api/users/:id', requireAuth, (req, res) => {
                 ...user,
                 days_remaining: Math.max(0, Math.floor(user.days_remaining || 0)),
                 is_active: user.is_active === 1,
-                created_at_formatted: new Date(user.create_at).toLocaleDateString('ru-RU'),
+                created_at_formatted: new Date(user.created_at).toLocaleDateString('ru-RU'),
                 observation_end_date_formatted: user.observation_end_date ?
                     new Date(user.observation_end_date).toLocaleDateString('ru-RU') : 'Не указана'
             },
@@ -512,15 +512,13 @@ app.get('/api/export/users', requireAuth, async (req, res) => {
         
         // Получаем данные опросов для каждого пользователя
         const exportData = {
-            generated_at: new Date().toISOString(),
+            generated_at: new Date().toISOString().split('T')[0],
             total_users: users.length,
             users: []
         };
         
         // Текущая дата для ограничения выгрузки
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayStr = today.toISOString().split('T')[0];
+        const todayStr = new Date().toISOString().split('T')[0];
         
         for (const user of users) {
             // Получаем все даты опросов пользователя (только до сегодняшнего дня)
@@ -534,18 +532,20 @@ app.get('/api/export/users', requireAuth, async (req, res) => {
             const surveyDates = db.prepare(surveyDatesQuery).all(user.id, todayStr);
             
             // Определяем период наблюдения (только до сегодняшнего дня)
-            const startDate = new Date(user.registration_date);
+            const startDate = user.registration_date;
             const endDate = user.observation_end_date ? 
-                new Date(Math.min(new Date(user.observation_end_date).getTime(), today.getTime())) : 
-                today;
+                (user.observation_end_date < todayStr ? user.observation_end_date : todayStr) : 
+                todayStr;
             
             const surveys = [];
             
             // Если нужно включать дни без опросов
             if (includeEmptySurveys === 'true') {
                 // Генерируем все даты периода наблюдения (только до сегодня)
-                const currentDate = new Date(startDate);
-                while (currentDate <= endDate) {
+                let currentDate = new Date(startDate);
+                const endDateTime = new Date(endDate);
+                
+                while (currentDate <= endDateTime) {
                     const dateStr = currentDate.toISOString().split('T')[0];
                     
                     // Проверяем, был ли опрос в этот день
@@ -579,7 +579,7 @@ app.get('/api/export/users', requireAuth, async (req, res) => {
                                     point,
                                     question_order
                                 FROM survey_answers
-                                WHERE user_id = ? AND DATE(created_at) = ?
+                                WHERE user_id = ? AND answer_date = ?
                                 ORDER BY question_order
                             `).all(user.id, dateStr);
                             
@@ -634,7 +634,7 @@ app.get('/api/export/users', requireAuth, async (req, res) => {
                                     point,
                                     question_order
                                 FROM survey_answers
-                                WHERE user_id = ? AND DATE(created_at) = ?
+                                WHERE user_id = ? AND answer_date = ?
                                 ORDER BY question_order
                             `).all(user.id, date.survey_date);
                             
@@ -652,7 +652,7 @@ app.get('/api/export/users', requireAuth, async (req, res) => {
             }
             
             // Сортируем опросы по дате (от новых к старым)
-            surveys.sort((a, b) => new Date(b.date) - new Date(a.date));
+            surveys.sort((a, b) => b.date.localeCompare(a.date));
             
             exportData.users.push({
                 id: user.id,
@@ -699,7 +699,7 @@ app.get('/api/users/:id/all-questions', requireAuth, (req, res) => {
         
         // Получаем все даты опросов пользователя
         const datesQuery = `
-            SELECT DISTINCT DATE(created_at) as date
+            SELECT DISTINCT answer_date as date
             FROM survey_answers
             WHERE user_id = ?
             ORDER BY date ASC
@@ -736,22 +736,22 @@ app.post('/api/users/:id/answers-by-questions', requireAuth, (req, res) => {
                 sa.question,
                 sa.answer,
                 sa.point,
-                DATE(sa.created_at) as date,
+                sa.answer_date as date,
                 sr.final_flag as flag
             FROM survey_answers sa
             LEFT JOIN survey_results sr ON sa.user_id = sr.user_id 
-                AND DATE(sa.created_at) = sr.survey_date
+                AND sa.answer_date = sr.survey_date
             WHERE sa.user_id = ? 
                 AND sa.question IN (${placeholders})
-                ${startDate ? 'AND DATE(sa.created_at) >= ?' : ''}
-                ${endDate ? 'AND DATE(sa.created_at) <= ?' : ''}
-            ORDER BY sa.created_at ASC, sa.question_order ASC
+                AND sa.answer_date >= COALESCE(?, sa.answer_date)
+                AND sa.answer_date <= COALESCE(?, sa.answer_date)
+            ORDER BY sa.answer_date ASC, sa.question_order ASC
         `
         
         const params = [userId, ...questions]
         
-        if (startDate) params.push(startDate)
-        if (endDate) params.push(endDate)
+        params.push(startDate || null)
+        params.push(endDate || null)
         
         const answers = db.prepare(query).all(...params)
         
