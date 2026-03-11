@@ -23,6 +23,16 @@ const db = new Database(dbPath, {
 
 db.pragma('foreign_keys = ON')
 
+// Вспомогательная функция для получения текущей даты в формате YYYY-MM-DD
+function getCurrentDate() {
+    return new Date().toISOString().split('T')[0];
+}
+
+// Вспомогательная функция для форматирования даты в YYYY-MM-DD
+function formatDateToYMD(date) {
+    return date.toISOString().split('T')[0];
+}
+
 // Репозиторий для работы с пользователями
 const userRepository = {
     getUserByTelegramId: (telegramId) => {
@@ -44,7 +54,7 @@ const userRepository = {
         const stmt = db.prepare(`
             SELECT * FROM users 
             WHERE observation_end_date IS NULL 
-               OR observation_end_date > date('now')
+               OR date(observation_end_date) >= date('now')
         `);
         return stmt.all();
     },
@@ -56,10 +66,10 @@ const userRepository = {
     },
 
     createUser: (telegramId, uniqueName, observationMonths) => {
-        // Рассчитываем дату окончания наблюдения
+        // Рассчитываем дату окончания наблюдения (только дата, без времени)
         const endDate = new Date();
         endDate.setMonth(endDate.getMonth() + observationMonths);
-        const endDateString = endDate.toISOString();
+        const endDateString = formatDateToYMD(endDate); // Сохраняем только дату
         
         const stmt = db.prepare(`
             INSERT INTO users (telegram_id, unique_name, observation_months, observation_end_date) 
@@ -72,10 +82,10 @@ const userRepository = {
     },
 
     updateObservationPeriod: (userId, observationMonths) => {
-        // Рассчитываем новую дату окончания наблюдения
+        // Рассчитываем новую дату окончания наблюдения (только дата, без времени)
         const endDate = new Date();
         endDate.setMonth(endDate.getMonth() + observationMonths);
-        const endDateString = endDate.toISOString();
+        const endDateString = formatDateToYMD(endDate); // Сохраняем только дату
         
         const stmt = db.prepare(`
             UPDATE users 
@@ -90,7 +100,7 @@ const userRepository = {
             SELECT 
                 CASE 
                     WHEN observation_end_date IS NULL THEN 1
-                    WHEN observation_end_date >= date('now') THEN 1
+                    WHEN date(observation_end_date) >= date('now') THEN 1
                     ELSE 0 
                 END as is_active
             FROM users 
@@ -103,7 +113,7 @@ const userRepository = {
     getDaysRemaining: (userId) => {
         const stmt = db.prepare(`
             SELECT 
-                julianday(observation_end_date) - julianday('now') as days_remaining
+                julianday(date(observation_end_date)) - julianday(date('now')) as days_remaining
             FROM users 
             WHERE id = ?
         `);
@@ -196,7 +206,7 @@ const userRepository = {
             VALUES (?, ?, ?, ?, ?)
         `);
         
-        const now = new Date().toISOString();
+        const now = getCurrentDate(); // Используем только дату
         if (status === 'sent') {
             stmt.run(userId, date, status, now, null);
         } else if (status === 'completed') {
@@ -207,7 +217,7 @@ const userRepository = {
     },
 
     getTodaysSurveyStatus: (userId) => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getCurrentDate();
         const stmt = db.prepare('SELECT * FROM daily_survey_logs WHERE user_id = ? AND date = ?');
         return stmt.get(userId, today);
     },
@@ -250,24 +260,24 @@ const userRepository = {
     },
 
     getTodayQuestionsAndAnswers: (userId) => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getCurrentDate();
         const stmt = db.prepare(`
             SELECT question, answer 
             FROM survey_answers 
             WHERE user_id = ? 
-            AND DATE(answer_date) = ?
+            AND date(answer_date) = ?
             ORDER BY question_order
         `);
         return stmt.all(userId, today);
     },
     
     getTodayAnswers: (userId) => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getCurrentDate();
         const stmt = db.prepare(`
             SELECT answer, point 
             FROM survey_answers 
             WHERE user_id = ? 
-            AND DATE(answer_date) = ?
+            AND date(answer_date) = ?
             ORDER BY question_order
         `);
         return stmt.all(userId, today);
@@ -282,18 +292,28 @@ const userRepository = {
     },
 
     getTodayAnswersCount: (userId) => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getCurrentDate();
         const stmt = db.prepare(`
             SELECT COUNT(*) as count 
             FROM survey_answers 
             WHERE user_id = ? 
-            AND DATE(created_at) = ?
+            AND date(answer_date) = ?
         `)
         return stmt.get(userId, today).count
     },
 
+    getUserRegistrationDate: (userId) => {
+        const stmt = db.prepare(`
+            SELECT date(created_at) as registration_date 
+            FROM users 
+            WHERE id = ?
+        `);
+        const result = stmt.get(userId);
+        return result?.registration_date;
+    },
+
     checkMissedSurveys: (userId) => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getCurrentDate();
         
         // Получаем дату регистрации пользователя
         const registrationDate = userRepository.getUserRegistrationDate(userId);
@@ -309,11 +329,11 @@ const userRepository = {
         // Получаем даты за последние 2 дня
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        const yesterdayStr = formatDateToYMD(yesterday);
 
         const dayBeforeYesterday = new Date();
         dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2);
-        const dayBeforeYesterdayStr = dayBeforeYesterday.toISOString().split('T')[0];
+        const dayBeforeYesterdayStr = formatDateToYMD(dayBeforeYesterday);
 
         // Проверяем, были ли эти даты после регистрации
         const registrationDateObj = new Date(registrationDate);
@@ -362,7 +382,7 @@ const userRepository = {
         // Проверяем, есть ли уже запись о пропуске сегодня
         const todayMissedRecord = db.prepare(`
             SELECT * FROM survey_answers
-            WHERE user_id = ? AND DATE(answer_date) = ? AND question = 'Пропуск опроса'  
+            WHERE user_id = ? AND date(answer_date) = ? AND question = 'Пропуск опроса'  
         `).get(userId, today);
 
         return {
@@ -378,7 +398,7 @@ const userRepository = {
         // Создаем запись в survey_answers
         const answersStmt = db.prepare(`
             INSERT OR REPLACE INTO survey_answers
-            (user_id, username, question, answer,  question_order, point, answer_date)
+            (user_id, username, question, answer, question_order, point, answer_date)
             VALUES (?, ?, ?, ?, ?, ?, ?)    
         `)
 
@@ -419,21 +439,21 @@ const userRepository = {
             userId,
             date,
             'completed',
-            new Date().toISOString()
+            getCurrentDate() // Используем только дату
         )
 
         console.log(`Создана запись о пропуске опросов более 2 дней для ${username} за ${date}`)
     },
 
     deleteTodayQuestionnare: (userId) => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getCurrentDate();
     
         // Начинаем транзакцию для атомарного удаления всех связанных данных
         const deleteTransaction = db.transaction((userId, today) => {
             // Удаляем ответы на опрос за сегодня
             const deleteAnswersStmt = db.prepare(`
                 DELETE FROM survey_answers 
-                WHERE user_id = ? AND DATE(answer_date) = ?
+                WHERE user_id = ? AND date(answer_date) = ?
             `);
             deleteAnswersStmt.run(userId, today);
             
@@ -613,7 +633,7 @@ function setSessionForSurvey(telegramId, user) {
 async function sendSurveyToUser(user) {
     try {
         const telegramId = user.telegram_id;
-        const today = new Date().toISOString().split('T')[0];
+        const today = getCurrentDate();
         
         // Проверяем, активен ли период наблюдения
         const isActive = userRepository.isObservationActive(user.id);
@@ -678,7 +698,7 @@ async function sendSurveyToUser(user) {
         const todayRealAnswers = db.prepare(`
             SELECT COUNT(*) as count 
             FROM survey_answers 
-            WHERE user_id = ? AND DATE(answer_date) = ? AND question != 'Пропуск опроса'
+            WHERE user_id = ? AND date(answer_date) = ? AND question != 'Пропуск опроса'
         `).get(user.id, today).count;
         
         // Если есть реальные ответы, не отправляем опрос
@@ -818,15 +838,15 @@ bot.command('survey', async (ctx) => {
         // Также удаляем запись о пропуске за сегодня, если она есть
         const deleteMissedStmt = db.prepare(`
             DELETE FROM survey_answers 
-            WHERE user_id = ? AND DATE(answer_date) = ? AND question = 'Пропуск опроса'
+            WHERE user_id = ? AND date(answer_date) = ? AND question = 'Пропуск опроса'
         `);
-        deleteMissedStmt.run(user.id, new Date().toISOString().split('T')[0]);
+        deleteMissedStmt.run(user.id, getCurrentDate());
         
         const deleteMissedResultStmt = db.prepare(`
             DELETE FROM survey_results 
             WHERE user_id = ? AND survey_date = ? AND final_score = 6
         `);
-        deleteMissedResultStmt.run(user.id, new Date().toISOString().split('T')[0]);
+        deleteMissedResultStmt.run(user.id, getCurrentDate());
 
         // Устанавливаем сессию
         ctx.session.step = 'survey';
@@ -853,7 +873,7 @@ bot.command('survey', async (ctx) => {
 async function handleSurveyAnswer(ctx, answer) {
     const telegramId = ctx.from.id;
     const user = userRepository.getUserByTelegramId(telegramId);
-    const today = new Date().toISOString().split('T')[0];
+    const today = getCurrentDate();
 
     
     if (!user) {
@@ -936,12 +956,12 @@ async function checkAnswers(ctx, user) {
 async function completeSurvey(ctx, user) {
     
     try {
-        const today = new Date().toISOString().split('T')[0]
+        const today = getCurrentDate();
 
         // Удаляем запись о пропуске за сегодня (если есть)
         const deleteMissedStmt = db.prepare(`
             DELETE FROM survey_answers
-            WHERE user_id = ? AND DATE(answer_date) = ? AND question = 'Пропуск опроса'    
+            WHERE user_id = ? AND date(answer_date) = ? AND question = 'Пропуск опроса'    
         `)
         deleteMissedStmt.run(user.id, today)
 
