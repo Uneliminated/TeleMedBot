@@ -4,11 +4,24 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { schedule } from 'node-cron';
+import fs from 'fs';
 
 dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const db = new Database(path.join(__dirname, '..', 'database.sqlite'));
+const isProduction = process.env.NODE_ENV === 'production'
+
+const dbPath = process.env.DB_PATH || path.join(__dirname, '..', 'database.sqlite')
+
+if (!fs.existsSync(dbPath)) {
+    console.log('База данных не найдена, будет создана новая')
+}
+
+const db = new Database(dbPath, {
+    verbose: console.log
+})
+
+db.pragma('foreign_keys = ON')
 
 // Репозиторий для работы с пользователями
 const userRepository = {

@@ -5,6 +5,7 @@ import sqlite3 from 'better-sqlite3';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
+import fs from 'fs'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,25 +15,48 @@ dotenv.config();
 const app = express()
 const PORT = process.env.WEB_PORT || 3000
 
-// Настройка сессий
-app.use(session({
+const isProduction = process.env.NODE_ENV === 'production'
+
+const sessionConfig = {
     secret: process.env.WEB_SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: false, // Заменить на true при HTTPS
-        maxAge: 24 * 60 * 60 * 1000
+        secure: isProduction,
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: 'lax'
     }
-}))
+}
+
+if (isProduction) {
+    app.set('trust proxy', 1)
+    sessionConfig.cookie.secure = true
+}
+
+// Настройка сессий
+app.use(session(sessionConfig))
 
 // Middleware
-app.use(cors())
+app.use(cors({
+    origin: isProduction ? process.env.WEB_DOMAIN : 'http://localhost:3000',
+    credentials: true
+}))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use(express.static(path.join(__dirname, '../public')))
 
 const dbPath = process.env.DB_PATH || path.join(__dirname, '..', 'database.sqlite')
-const db = new sqlite3(dbPath)
+const dbDir = path.dirname(dbPath)
+if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true })
+}
+
+const db = new sqlite3(dbPath, {
+    verbose: console.log,
+    fileMustExist: false
+})
+
+db.pragma('foreign_keys = ON')
 
 // Создаем таблицы, если они не существуют
 db.prepare(`
@@ -97,6 +121,8 @@ const requireAuth = (req, res, next) => {
         res.redirect('/login.html')
     }
 }
+
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Маршруты
 
@@ -739,10 +765,17 @@ app.post('/api/users/:id/answers-by-questions', requireAuth, (req, res) => {
 // Защита статических файлов
 app.get(['/index.html', '/user.html'], requireAuth, (req, res, next) => {
     next()
-}, express.static(path.join(__dirname, '../public')))
+})
+
+//Обработка ошибок
+app.use((err, req, res, next) => {
+    console.error('Server error:', err);
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+});
 
 // Запуск сервера
-app.listen(PORT, () => {
-    console.log(`Веб-сервер запущен на порту ${PORT}`)
-    console.log(`Адрес: http://localhost:${PORT}`)
-})
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Веб-сервер запущен на порту ${PORT}`);
+    console.log(`Режим: ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}`);
+    console.log(`Адрес: http://localhost:${PORT}`);
+});

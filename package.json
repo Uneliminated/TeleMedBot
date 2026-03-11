@@ -5,10 +5,10 @@
   "license": "ISC",
   "author": "",
   "type": "module",
-  "main": "server.js",
   "scripts": {
     "server": "node server/server.js",
-    "bot": "node bot/bot.js"
+    "bot": "node bot/bot.js",
+    "start:all": "pm2 start ecosystem.config.cjs"
   },
   "dependencies": {
     "better-sqlite3": "^12.6.2",
