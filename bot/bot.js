@@ -298,11 +298,11 @@ const userRepository = {
         // Получаем даты за последние 2 дня
         const yesterday = new Date()
         yesterday.setDate(yesterday.getDate() - 1)
-        const yesterdayStr = yesterday.toISOString.split('T')[0]
+        const yesterdayStr = yesterday.toISOString().split('T')[0]
 
         const dayBeforeYesterday = new Date()
         dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2)
-        const dayBeforeYesterdayStr = dayBeforeYesterday.toISOString.split('T')[0]
+        const dayBeforeYesterdayStr = dayBeforeYesterday.toISOString().split('T')[0]
 
         // Получаем статус опросов за вчера и позавчера
         const stmt = db.prepare(`
@@ -358,7 +358,7 @@ const userRepository = {
         // Создаем запись в survey_result
         const resultStmt = db.prepare(`
             INSERT OR REPLACE INTO survey_results
-            (userId, username, survey_date, final_score, final_flag)
+            (user_id, username, survey_date, final_score, final_flag)
             VALUES (?, ?, ?, ?, ?)    
         `)
 
