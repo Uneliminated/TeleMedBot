@@ -293,48 +293,86 @@ const userRepository = {
     },
 
     checkMissedSurveys: (userId) => {
-        const today = new Date().toISOString().split('T')[0]
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Получаем дату регистрации пользователя
+        const registrationDate = userRepository.getUserRegistrationDate(userId);
+        if (!registrationDate) {
+            return {
+                yesterdayCompleted: false,
+                dayBeforeYesterdayCompleted: false,
+                bothMissed: false,
+                hasTodayMissedRecord: false
+            };
+        }
 
         // Получаем даты за последние 2 дня
-        const yesterday = new Date()
-        yesterday.setDate(yesterday.getDate() - 1)
-        const yesterdayStr = yesterday.toISOString().split('T')[0]
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-        const dayBeforeYesterday = new Date()
-        dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2)
-        const dayBeforeYesterdayStr = dayBeforeYesterday.toISOString().split('T')[0]
+        const dayBeforeYesterday = new Date();
+        dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2);
+        const dayBeforeYesterdayStr = dayBeforeYesterday.toISOString().split('T')[0];
 
-        // Получаем статус опросов за вчера и позавчера
-        const stmt = db.prepare(`
-            SELECT date, status
-            FROM daily_survey_logs
-            WHERE user_id = ? AND date IN (?, ?)
-        `)
+        // Проверяем, были ли эти даты после регистрации
+        const registrationDateObj = new Date(registrationDate);
+        const yesterdayDateObj = new Date(yesterdayStr);
+        const dayBeforeYesterdayDateObj = new Date(dayBeforeYesterdayStr);
 
-        const logs = stmt.all(userId, yesterdayStr, dayBeforeYesterdayStr)
-        
-        const statusMap = {}
-        logs.forEach(log => {
-            statusMap[log.date] = log.status
-        })
+        // Если дата до регистрации, считаем её как несуществующую для проверки пропусков
+        let yesterdayCompleted = true; // По умолчанию true для дат до регистрации
+        let dayBeforeYesterdayCompleted = true; // По умолчанию true для дат до регистрации
 
-        // Проверяем, были ли заполнены опросники за вчера и позавчера
-        const yesterdayCompleted = statusMap[yesterdayStr] === 'completed'
-        const dayBeforeYesterdayCompleted = statusMap[dayBeforeYesterdayStr] === 'completed'
+        // Получаем статус опросов за вчера и позавчера (только если даты после регистрации)
+        const datesToCheck = [];
+        const dateMap = {};
 
-        // Проверяем, если уже запись о пропуске сегодня
+        if (yesterdayDateObj >= registrationDateObj) {
+            datesToCheck.push(yesterdayStr);
+        }
+        if (dayBeforeYesterdayDateObj >= registrationDateObj) {
+            datesToCheck.push(dayBeforeYesterdayStr);
+        }
+
+        if (datesToCheck.length > 0) {
+            const placeholders = datesToCheck.map(() => '?').join(',');
+            const stmt = db.prepare(`
+                SELECT date, status
+                FROM daily_survey_logs
+                WHERE user_id = ? AND date IN (${placeholders})
+            `);
+            
+            const logs = stmt.all(userId, ...datesToCheck);
+            
+            const statusMap = {};
+            logs.forEach(log => {
+                statusMap[log.date] = log.status;
+            });
+
+            // Обновляем значения только для дат после регистрации
+            if (yesterdayDateObj >= registrationDateObj) {
+                yesterdayCompleted = statusMap[yesterdayStr] === 'completed';
+            }
+            if (dayBeforeYesterdayDateObj >= registrationDateObj) {
+                dayBeforeYesterdayCompleted = statusMap[dayBeforeYesterdayStr] === 'completed';
+            }
+        }
+
+        // Проверяем, есть ли уже запись о пропуске сегодня
         const todayMissedRecord = db.prepare(`
             SELECT * FROM survey_answers
             WHERE user_id = ? AND DATE(answer_date) = ? AND question = 'Пропуск опроса'  
-        `).get(userId, today)
+        `).get(userId, today);
 
         return {
             yesterdayCompleted,
             dayBeforeYesterdayCompleted,
             bothMissed: !yesterdayCompleted && !dayBeforeYesterdayCompleted,
             hasTodayMissedRecord: !!todayMissedRecord
-        }
+        };
     },
+
 
     createMissedSurveyRecord: (userId, username, date) => {
         // Создаем запись в survey_answers
