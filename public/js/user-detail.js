@@ -111,22 +111,7 @@ async function loadUserData() {
 
         renderUserInfo(data)
         renderStatistics(data.stats)
-        
-        // Загружаем данные опросов только если пользователь активен
-        if (isUserActive) {
-            await loadQuestionsData()
-        } else {
-            // Если пользователь неактивен, показываем соответствующее сообщение
-            const graphsWrapper = document.getElementById('graphsWrapper')
-            if (graphsWrapper) {
-                graphsWrapper.innerHTML = `
-                    <div class="inactive-user-message">
-                        <p>Пользователь неактивен. Данные опросов недоступны.</p>
-                        <p>Дата окончания наблюдения: ${data.user.observation_end_date_formatted || 'Не указана'}</p>
-                    </div>
-                `
-            }
-        }
+        loadQuestionsData()
 
         const loadingElement = document.getElementById('loading')
         const contentElement = document.getElementById('content')
@@ -163,9 +148,9 @@ function renderUserInfo(data) {
 
     if (userStatusEl) {
         if (user.is_active) {
-            userStatusEl.innerHTML = `<span class="status-active">Активен</span>`
+            userStatusEl.innerHTML = `<span>Активен</span>`
         } else {
-            userStatusEl.innerHTML = `<span class="status-inactive">Завершен</span>`
+            userStatusEl.innerHTML = `<span>Завершен</span>`
         }
     }
 
@@ -202,6 +187,7 @@ function sortQuestionsByOrder(questions) {
     })
     
     // Сортируем вопросы согласно порядку из QUESTION_ORDER
+    // Все вопросы гарантированно есть в списке
     return questions.sort((a, b) => {
         return orderMap.get(a) - orderMap.get(b)
     })
@@ -234,6 +220,7 @@ async function loadQuestionsData() {
         console.error('Ошибка загрузки вопросов:', error)
     }
 }
+
 
 function renderQuestionsPanel() {
     const graphsView = document.getElementById('graphsWrapper')
@@ -340,40 +327,6 @@ async function loadAnswersForQuestions() {
             </div>
         `
         
-        // Используем вчерашнюю дату как конечную, чтобы исключить сегодняшний опрос
-        const yesterday = new Date()
-        yesterday.setDate(yesterday.getDate() - 1)
-        const yesterdayUTC = new Date(Date.UTC(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate()))
-        const yesterdayStr = yesterdayUTC.toISOString().split('T')[0]
-
-        let startDateStr = null
-        if (userRegistrationDate) {
-            const startDate = new Date(userRegistrationDate)
-            startDate.setHours(0, 0, 0, 0)
-            startDateStr = startDate.toISOString().split('T')[0]
-        }
-        
-        // Определяем конечную дату с учетом активности пользователя
-        let endDateStr = yesterdayStr
-        
-        // Если пользователь неактивен, используем дату окончания наблюдения
-        if (!isUserActive && userEndDate) {
-            const endDate = new Date(userEndDate)
-            endDate.setHours(0, 0, 0, 0)
-            
-            // Если дата окончания меньше вчерашней, используем её
-            if (endDate < yesterday) {
-                endDateStr = endDate.toISOString().split('T')[0]
-            }
-        }
-        
-        console.log('Request params:', {
-            questions: selectedQuestions,
-            startDate: startDateStr,
-            endDate: endDateStr,
-            isUserActive: isUserActive
-        })
-        
         const response = await fetch(`/api/users/${userId}/answers-by-questions`, {
             method: 'POST',
             headers: {
@@ -381,8 +334,8 @@ async function loadAnswersForQuestions() {
             },
             body: JSON.stringify({
                 questions: selectedQuestions,
-                startDate: startDateStr,
-                endDate: endDateStr // Используем endDate вместо todayStr
+                startDate: userRegistrationDate ? userRegistrationDate.toISOString().split('T')[0] : null,
+                endDate: new Date().toISOString().split('T')[0]
             })
         })
         
@@ -424,20 +377,8 @@ function renderQuestionsTable(data) {
         return
     }
     
-    // Получаем все уникальные даты и сортируем их (исключаем сегодняшнюю дату)
-    const today = new Date().toISOString().split('T')[0]
-    const allDates = [...new Set(data.answers.map(item => item.date))]
-        .filter(date => date < today) // Исключаем сегодняшнюю дату
-        .sort()
-    
-    if (allDates.length === 0) {
-        container.innerHTML = `
-            <div class="no-data-message">
-                <p>Нет данных за прошедшие дни</p>
-            </div>
-        `
-        return
-    }
+    // Получаем все уникальные даты и сортируем их
+    const allDates = [...new Set(data.answers.map(item => item.date))].sort()
     
     // Группируем ответы по вопросам
     const answersByQuestion = {}
@@ -446,8 +387,7 @@ function renderQuestionsTable(data) {
     })
     
     data.answers.forEach(item => {
-        // Добавляем только ответы за прошедшие дни
-        if (item.date < today && answersByQuestion[item.question]) {
+        if (answersByQuestion[item.question]) {
             answersByQuestion[item.question][item.date] = {
                 answer: item.answer,
                 point: item.point,
@@ -507,7 +447,7 @@ function renderQuestionsTable(data) {
         
         // Ячейки с ответами по датам
         allDates.forEach(date => {
-            const answerData = answersByQuestion[question]?.[date]
+            const answerData = answersByQuestion[question][date]
             let cellClass = 'answer-cell'
             let answerText = '-'
             

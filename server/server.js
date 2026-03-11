@@ -368,7 +368,7 @@ app.get('/api/users/:id', requireAuth, (req, res) => {
             WHERE u.id = ?
         `
 
-        // Запрос статистики ответов (исключаем сегодняшний день)
+        // Запрос статистики ответов
         const statsQuery = `
             SELECT
                 COUNT(DISTINCT survey_date) as total_surveys,
@@ -378,7 +378,6 @@ app.get('/api/users/:id', requireAuth, (req, res) => {
                 SUM(CASE WHEN final_flag = 'green' THEN 1 ELSE 0 END) as green_count
             FROM survey_results
             WHERE user_id = ?
-                AND survey_date < date('now')  -- Исключаем сегодняшний день
         `
 
         //Получаем информацию о пользователе
@@ -390,7 +389,7 @@ app.get('/api/users/:id', requireAuth, (req, res) => {
 
         //Получаем статистику
         const stats = db.prepare(statsQuery).get(userId) || {
-            total_surveys: 0,
+            total_survey: 0,
             avg_score: 0,
             red_count: 0,
             yellow_count: 0,
@@ -402,8 +401,7 @@ app.get('/api/users/:id', requireAuth, (req, res) => {
                 ...user,
                 days_remaining: Math.max(0, Math.floor(user.days_remaining || 0)),
                 is_active: user.is_active === 1,
-                created_at_formatted: user.created_at ?
-                    new Date(user.created_at).toLocaleDateString('ru-RU') : 'Не указана',
+                created_at_formatted: new Date(user.create_at).toLocaleDateString('ru-RU'),
                 observation_end_date_formatted: user.observation_end_date ?
                     new Date(user.observation_end_date).toLocaleDateString('ru-RU') : 'Не указана'
             },
@@ -416,7 +414,6 @@ app.get('/api/users/:id', requireAuth, (req, res) => {
         res.status(500).json({ error: 'Ошибка базы данных' })
     }
 })
-
 
 // 5. Обновление периода наблюдения
 app.put('/api/users/:id/observation-period', requireAuth, (req, res) => {
@@ -685,27 +682,26 @@ app.get('/api/export/users', requireAuth, async (req, res) => {
     }
 });
 
+// 7. Получение всех вопросов пользователя
 app.get('/api/users/:id/all-questions', requireAuth, (req, res) => {
     const userId = req.params.id
     
     try {
-        // Получаем все уникальные вопросы из ответов пользователя (только за прошедшие дни)
+        // Получаем все уникальные вопросы из ответов пользователя
         const questionsQuery = `
             SELECT DISTINCT question
             FROM survey_answers
             WHERE user_id = ?
-                AND DATE(created_at) < date('now')  -- Исключаем сегодняшний день
             ORDER BY question_order
         `
         
         const questions = db.prepare(questionsQuery).all(userId)
         
-        // Получаем все даты опросов пользователя (только за прошедшие дни)
+        // Получаем все даты опросов пользователя
         const datesQuery = `
             SELECT DISTINCT DATE(created_at) as date
             FROM survey_answers
             WHERE user_id = ?
-                AND DATE(created_at) < date('now')  -- Исключаем сегодняшний день
             ORDER BY date ASC
         `
         
@@ -721,7 +717,7 @@ app.get('/api/users/:id/all-questions', requireAuth, (req, res) => {
     }
 })
 
-// 8. Получение ответов по выбранным вопросам (исправленная версия)
+// 8. Получение ответов по выбранным вопросам
 app.post('/api/users/:id/answers-by-questions', requireAuth, (req, res) => {
     const userId = req.params.id
     const { questions, startDate, endDate } = req.body
@@ -734,8 +730,8 @@ app.post('/api/users/:id/answers-by-questions', requireAuth, (req, res) => {
         // Создаем плейсхолдеры для вопросов
         const placeholders = questions.map(() => '?').join(',')
         
-        // Запрос для получения ответов на выбранные вопросы (только за прошедшие дни)
-        let query = `
+        // Запрос для получения ответов на выбранные вопросы
+        const query = `
             SELECT 
                 sa.question,
                 sa.answer,
@@ -747,36 +743,15 @@ app.post('/api/users/:id/answers-by-questions', requireAuth, (req, res) => {
                 AND DATE(sa.created_at) = sr.survey_date
             WHERE sa.user_id = ? 
                 AND sa.question IN (${placeholders})
-                AND DATE(sa.created_at) < date('now')  -- Всегда исключаем сегодняшний день
+                ${startDate ? 'AND DATE(sa.created_at) >= ?' : ''}
+                ${endDate ? 'AND DATE(sa.created_at) <= ?' : ''}
+            ORDER BY sa.created_at ASC, sa.question_order ASC
         `
         
         const params = [userId, ...questions]
         
-        if (startDate) {
-            query += ` AND DATE(sa.created_at) >= ?`
-            params.push(startDate)
-        }
-        
-        if (endDate) {
-            // Убеждаемся, что endDate не включает сегодняшний день
-            const endDateObj = new Date(endDate)
-            const today = new Date()
-            today.setHours(0, 0, 0, 0)
-            
-            if (endDateObj >= today) {
-                // Если endDate включает сегодня, используем вчерашнюю дату
-                const yesterday = new Date(today)
-                yesterday.setDate(yesterday.getDate() - 1)
-                const yesterdayStr = yesterday.toISOString().split('T')[0]
-                query += ` AND DATE(sa.created_at) <= ?`
-                params.push(yesterdayStr)
-            } else {
-                query += ` AND DATE(sa.created_at) <= ?`
-                params.push(endDate)
-            }
-        }
-        
-        query += ` ORDER BY sa.created_at ASC, sa.question_order ASC`
+        if (startDate) params.push(startDate)
+        if (endDate) params.push(endDate)
         
         const answers = db.prepare(query).all(...params)
         
