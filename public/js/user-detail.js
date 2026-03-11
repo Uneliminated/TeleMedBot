@@ -327,31 +327,68 @@ async function loadAnswersForQuestions() {
             </div>
         `
         
+        // Получаем сегодняшнюю дату
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        
+        // Если нет даты регистрации, используем дату на месяц раньше
+        let startDate = userRegistrationDate 
+            ? new Date(userRegistrationDate) 
+            : new Date(today)
+        
+        if (!userRegistrationDate) {
+            startDate.setMonth(startDate.getMonth() - 1)
+        }
+        
+        // Убеждаемся, что startDate не больше endDate
+        if (startDate > today) {
+            startDate = new Date(today)
+            startDate.setMonth(startDate.getMonth() - 1)
+        }
+        
+        const requestBody = {
+            questions: selectedQuestions,
+            startDate: startDate.toISOString().split('T')[0],
+            endDate: today.toISOString().split('T')[0]
+        }
+        
+        console.log('Отправляем запрос:', requestBody) // Для отладки
+        
         const response = await fetch(`/api/users/${userId}/answers-by-questions`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                questions: selectedQuestions,
-                startDate: userRegistrationDate ? userRegistrationDate.toISOString().split('T')[0] : null,
-                endDate: new Date().toISOString().split('T')[0]
-            })
+            body: JSON.stringify(requestBody)
         })
         
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
         const data = await response.json()
+        console.log('Получен ответ:', data) // Для отладки
+        
+        // Проверяем, есть ли ответы
+        if (!data.answers || data.answers.length === 0) {
+            container.innerHTML = `
+                <div class="no-data-message">
+                    <p>Нет данных за выбранный период</p>
+                    <p class="hint">Период: с ${requestBody.startDate} по ${requestBody.endDate}</p>
+                </div>
+            `
+            return
+        }
         
         // Сортируем вопросы в ответе в заданном порядке
-        if (data.answers) {
-            const orderMap = new Map()
-            QUESTION_ORDER.forEach((question, index) => {
-                orderMap.set(question, index)
-            })
-            
-            data.answers.sort((a, b) => {
-                return orderMap.get(a.question) - orderMap.get(b.question)
-            })
-        }
+        const orderMap = new Map()
+        QUESTION_ORDER.forEach((question, index) => {
+            orderMap.set(question, index)
+        })
+        
+        data.answers.sort((a, b) => {
+            return orderMap.get(a.question) - orderMap.get(b.question)
+        })
         
         renderQuestionsTable(data)
     } catch (error) {
@@ -359,6 +396,7 @@ async function loadAnswersForQuestions() {
         document.getElementById('questionsTableContainer').innerHTML = `
             <div class="error-message">
                 <p>Ошибка загрузки ответов: ${error.message}</p>
+                <button class="btn small-btn" onclick="loadAnswersForQuestions()">Повторить</button>
             </div>
         `
     }
@@ -377,8 +415,9 @@ function renderQuestionsTable(data) {
         return
     }
     
-    // Получаем все уникальные даты и сортируем их
+    // Получаем все уникальные даты и сортируем их (от новых к старым или наоборот)
     const allDates = [...new Set(data.answers.map(item => item.date))].sort()
+    console.log('Найденные даты:', allDates) // Для отладки
     
     // Группируем ответы по вопросам
     const answersByQuestion = {}
@@ -434,7 +473,9 @@ function renderQuestionsTable(data) {
     `
     
     // Строки для каждого вопроса в отсортированном порядке
-    sortedSelectedQuestions.forEach((question, index) => {
+    let hasData = false
+    
+    sortedSelectedQuestions.forEach((question) => {
         const orderNumber = QUESTION_ORDER.indexOf(question) + 1
         
         html += `<tr>`
@@ -452,6 +493,7 @@ function renderQuestionsTable(data) {
             let answerText = '-'
             
             if (answerData) {
+                hasData = true
                 answerText = answerData.answer || '-'
                 // Добавляем класс флага для окраски ячейки
                 if (answerData.flag) {
@@ -474,6 +516,16 @@ function renderQuestionsTable(data) {
             </table>
         </div>
     `
+    
+    // Если нет данных ни по одному вопросу
+    if (!hasData) {
+        container.innerHTML = `
+            <div class="no-data-message">
+                <p>Нет ответов на выбранные вопросы за указанный период</p>
+            </div>
+        `
+        return
+    }
     
     // Добавляем легенду
     html += `
