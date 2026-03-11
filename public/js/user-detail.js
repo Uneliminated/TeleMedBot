@@ -326,6 +326,22 @@ async function loadAnswersForQuestions() {
                 <p>Загрузка ответов...</p>
             </div>
         `
+        const today = new Date()
+        const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()))
+        const todayStr = todayUTC.toISOString().split('T')[0]
+
+        let startDateStr = null
+        if (userRegistrationDate) {
+            const startDate = new Date(userRegistrationDate)
+            startDate.setHours(0, 0, 0, 0)
+            startDateStr = startDate.toISOString().split('T')[0]
+        }
+        
+        console.log('Request params:', {
+            questions: selectedQuestions,
+            startDate: startDateStr,
+            endDate: todayStr
+        })
         
         const response = await fetch(`/api/users/${userId}/answers-by-questions`, {
             method: 'POST',
@@ -334,8 +350,8 @@ async function loadAnswersForQuestions() {
             },
             body: JSON.stringify({
                 questions: selectedQuestions,
-                startDate: userRegistrationDate ? userRegistrationDate.toISOString().split('T')[0] : null,
-                endDate: new Date().toISOString().split('T')[0]
+                startDate: startDateStr,
+                endDate: todayStr
             })
         })
         
