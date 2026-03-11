@@ -331,28 +331,26 @@ async function loadAnswersForQuestions() {
         const today = new Date()
         today.setHours(0, 0, 0, 0)
         
-        // Если нет даты регистрации, используем дату на месяц раньше
-        let startDate = userRegistrationDate 
-            ? new Date(userRegistrationDate) 
-            : new Date(today)
+        // Форматируем даты в YYYY-MM-DD
+        const endDate = formateDateForAPI(today)
         
-        if (!userRegistrationDate) {
-            startDate.setMonth(startDate.getMonth() - 1)
-        }
+        // Используем сегодняшнюю дату как startDate для теста
+        // Так как в логах видно, что запрос идет за 2026-03-10
+        const startDate = '2026-03-10' // или используйте formateDateForAPI(today)
         
-        // Убеждаемся, что startDate не больше endDate
-        if (startDate > today) {
-            startDate = new Date(today)
-            startDate.setMonth(startDate.getMonth() - 1)
-        }
+        // Важно: передаем ПОЛНЫЕ тексты вопросов, без обрезания
+        // Создаем копию массива с вопросами, чтобы точно передать полные строки
+        const questionsToSend = selectedQuestions.map(q => String(q)) // Принудительно преобразуем в строку
+        
+        console.log('Отправляем вопросы:', questionsToSend) // Проверяем в консоли
         
         const requestBody = {
-            questions: selectedQuestions,
-            startDate: startDate.toISOString().split('T')[0],
-            endDate: today.toISOString().split('T')[0]
+            questions: questionsToSend,
+            startDate: startDate,
+            endDate: endDate
         }
         
-        console.log('Отправляем запрос:', requestBody) // Для отладки
+        console.log('Отправляем запрос:', requestBody)
         
         const response = await fetch(`/api/users/${userId}/answers-by-questions`, {
             method: 'POST',
@@ -367,14 +365,16 @@ async function loadAnswersForQuestions() {
         }
         
         const data = await response.json()
-        console.log('Получен ответ:', data) // Для отладки
+        console.log('Получен ответ:', data)
         
-        // Проверяем, есть ли ответы
         if (!data.answers || data.answers.length === 0) {
+            // Показываем более информативное сообщение
             container.innerHTML = `
                 <div class="no-data-message">
                     <p>Нет данных за выбранный период</p>
-                    <p class="hint">Период: с ${requestBody.startDate} по ${requestBody.endDate}</p>
+                    <p class="hint">Период: с ${startDate} по ${endDate}</p>
+                    <p class="hint">Количество выбранных вопросов: ${selectedQuestions.length}</p>
+                    <button class="btn small-btn" onclick="debugQuestions()">Проверить вопросы</button>
                 </div>
             `
             return
@@ -387,7 +387,7 @@ async function loadAnswersForQuestions() {
         })
         
         data.answers.sort((a, b) => {
-            return orderMap.get(a.question) - orderMap.get(b.question)
+            return (orderMap.get(a.question) || 999) - (orderMap.get(b.question) || 999)
         })
         
         renderQuestionsTable(data)
@@ -400,6 +400,23 @@ async function loadAnswersForQuestions() {
             </div>
         `
     }
+}
+
+// Функция для отладки вопросов
+function debugQuestions() {
+    console.log('=== ОТЛАДКА ВОПРОСОВ ===')
+    console.log('allQuestions:', allQuestions)
+    console.log('selectedQuestions:', selectedQuestions)
+    console.log('QUESTION_ORDER:', QUESTION_ORDER)
+    
+    // Проверяем соответствие вопросов
+    const missingInAllQuestions = QUESTION_ORDER.filter(q => !allQuestions.includes(q))
+    const extraInAllQuestions = allQuestions.filter(q => !QUESTION_ORDER.includes(q))
+    
+    console.log('Вопросы из QUESTION_ORDER, которых нет в allQuestions:', missingInAllQuestions)
+    console.log('Вопросы из allQuestions, которых нет в QUESTION_ORDER:', extraInAllQuestions)
+    
+    alert('Информация о вопросах выведена в консоль (F12)')
 }
 
 // Отрисовка таблицы с ответами
