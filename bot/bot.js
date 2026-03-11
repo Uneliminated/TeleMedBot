@@ -1260,8 +1260,22 @@ bot.on('message:text', async (ctx) => {
                     `Автоматически отправляем первый опрос...`
                 );
                 
-                // Автоматически отправляем опросник новому пользователю
-                await sendSurveyToUser(newUser);
+                setTimeout(async () => {
+                    try {
+                        // Проверяем, активен ли пользователь
+                        const isActive = userRepository.isObservationActive(newUser.id);
+                        if (isActive) {
+                            // Устанавливаем сессию для пользователя
+                            setSessionForSurvey(newUser.telegram_id, newUser);
+                            
+                            // Отправляем опрос
+                            await sendSurveyToUser(newUser);
+                            console.log(`Первый опрос успешно отправлен пользователю ${newUser.unique_name}`);
+                        }
+                    } catch (error) {
+                        console.error(`Ошибка при отправке первого опроса пользователю ${newUser.unique_name}:`, error);
+                    }
+                }, 1000); // Задержка 1 секунда
 
                 // Сбрасываем сессию
                 ctx.session.step = 'idle';
