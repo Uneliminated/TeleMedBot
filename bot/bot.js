@@ -409,7 +409,7 @@ const userRepository = {
             'Пропуск опроса',
             'не заполнял опрос 3 или более дней подряд',
             1,
-            6,
+            3,
             date
         )
 
@@ -417,15 +417,15 @@ const userRepository = {
         const resultStmt = db.prepare(`
             INSERT OR REPLACE INTO survey_results
             (user_id, username, survey_date, final_score, final_flag)
-            VALUES (?, ?, ?, ?, ?)    
+            VALUES (?, ?, ?, ?, ?)
         `)
 
         resultStmt.run(
             userId,
             username,
             date,
-            6,
-            'red'
+            3,
+            'yellow'
         )
 
         // Обновляем daily_survey_logs
