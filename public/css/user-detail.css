@@ -1,5 +1,11 @@
 
 /* Общие стили для статистики */
+@media (max-width: 480px) {
+    .stats_info {
+        display: none;
+    }
+}
+
 .stats_info_list {
     display: flex;
     justify-content: space-evenly;
@@ -165,8 +171,7 @@
 
 /* Колонка с вопросами */
 .question-column {
-    min-width: 250px;
-    width: 250px;
+    min-width: 50px;
     max-width: 250px;
     background: #fafafa;
     font-weight: 500;
@@ -375,16 +380,15 @@
     }
     
     .question-item label {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
     }
     
     .answers-table {
-        min-width: 600px;
+        min-width: 200px;
     }
     
     .question-column {
-        min-width: 200px;
-        width: 200px;
+        min-width: 100px;
         max-width: 200px;
     }
     
@@ -408,12 +412,13 @@
 
 @media (max-width: 480px) {
     .questions-panel {
-        padding: 10px;
+        padding: 3px;
     }
     
     .questions-panel-controls {
         flex-direction: column;
-        width: 100%;
+        margin: 0 auto;
+        width: 50%;
     }
     
     .btn.small-btn,
@@ -424,32 +429,33 @@
     
     /* Еще уменьшаем минимальную ширину таблицы */
     .answers-table {
-        min-width: 500px;
+        min-width: 70px;
     }
     
     .question-column {
-        min-width: 150px;
-        width: 150px;
-        max-width: 150px;
+        min-width: 40px;
+        width: 40px;
+        max-width: 40px;
     }
     
     .date-column {
-        min-width: 90px;
-        width: 90px;
-        max-width: 90px;
+        min-width: 20px;
+        width: 20px;
+        max-width: 20px;
     }
     
     .answers-table th,
     .answers-table td {
-        padding: 8px 4px;
-        font-size: 0.9rem;
+        padding: 8px 3px;
+        font-size: 0.8rem;
     }
     
     .answer-cell {
-        max-width: 90px;
-        min-width: 90px;
-        font-size: 0.85rem;
-        padding: 6px 3px;
+        max-width: 10px;
+        width: 10px;
+        min-width: 10px;
+        font-size: 0.80rem;
+        padding: 6px 2px;
     }
     
     .table-legend {
