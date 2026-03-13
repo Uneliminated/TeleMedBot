@@ -495,10 +495,13 @@ await bot.api.setMyCommands([
 const QUESTIONS = [
     "Как вы себя чувствуете?",
     "Есть ли у вас признаки ОРВИ?",
+    "Есть ли у вас одышка?",
     "Одышка стала сильнее, чем вчера?",
     "Оцените одышку от 1 до 10",
+    "Есть ли у вас отеки?",
     "Отеки стали сильнее, чем вчера?",
     "Оцените отеки от 1 до 10",
+    "Есть ли у вас слабость?",
     "Слабость стала выраженнее, чем вчера?",
     "Оцените слабость от 1 до 10",
     "Какое у вас сегодня систолическое (верхнее) АД?",
@@ -524,12 +527,24 @@ const ANSWERS = [
         "Нет",
         "Да"
     ],
-    ["1","2","3","4","5","6","7","8","9","10"],
     [
         "Нет",
         "Да"
     ],
     ["1","2","3","4","5","6","7","8","9","10"],
+    [
+        "Нет",
+        "Да"
+    ],
+    [
+        "Нет",
+        "Да"
+    ],
+    ["1","2","3","4","5","6","7","8","9","10"],
+    [
+        "Нет",
+        "Да"
+    ],
     [
         "Нет",
         "Да"
@@ -1220,17 +1235,23 @@ bot.on('message:text', async (ctx) => {
         if (text === "Хорошо/нормально"){
             ctx.session.nextQuestion = 2
         } else if ((currentQuestion === 2) && (text === "Нет")){
-            ctx.session.nextQuestion = 4
-        } else if ((currentQuestion === 4) && (text === "Нет")){
-            ctx.session.nextQuestion = 6
+            ctx.session.nextQuestion = 5
+        } else if ((currentQuestion === 3) && (text === "Нет")){
+            ctx.session.nextQuestion = 5
+        } else if ((currentQuestion === 5) && (text === "Нет")){
+            ctx.session.nextQuestion = 8
         } else if ((currentQuestion === 6) && (text === "Нет")){
             ctx.session.nextQuestion = 8
+        } else if ((currentQuestion === 8) && (text === "Нет")){
+            ctx.session.nextQuestion = 11
+        } else if ((currentQuestion === 9) && (text === "Нет")){
+            ctx.session.nextQuestion = 11
         } else if ((text === "100 - 139 мм рт.ст.") || (text === "140 - 179 мм рт.ст.")){
-            ctx.session.nextQuestion = 15
+            ctx.session.nextQuestion = 18
         } else if (text === "Выше 179 мм рт.ст."){
-            ctx.session.nextQuestion = 12
-        } else if (currentQuestion === 11){
             ctx.session.nextQuestion = 15
+        } else if (currentQuestion === 14){
+            ctx.session.nextQuestion = 18
         } else {
             ctx.session.nextQuestion = currentQuestion + 1;
         }
