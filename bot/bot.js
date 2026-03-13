@@ -770,8 +770,8 @@ async function sendDailySurveyToAllUsers() {
 }
 
 // Настраиваем cron-задачу для ежедневной отправки в 12:00
-schedule('0 12 * * *', async () => {
-    console.log('Запуск автоматической отправки опросов (12:00)...');
+schedule('0 9 * * *', async () => {
+    console.log('Запуск автоматической отправки опросов (09:00)...');
     await sendDailySurveyToAllUsers();
 }, {
     timezone: "Europe/Moscow"
