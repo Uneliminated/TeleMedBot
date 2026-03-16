@@ -241,17 +241,17 @@ app.get('/api/users', requireAuth, (req,res) => {
             sr.survey_date,
             -- Флаги за предыдущие 6 дней
             (SELECT final_flag FROM survey_results 
-             WHERE user_id = u.id AND survey_date = '${dates[1]}') as flag_day1,
+             WHERE user_id = u.id AND survey_date = '${dates[0]}') as flag_day1,
             (SELECT final_flag FROM survey_results 
-             WHERE user_id = u.id AND survey_date = '${dates[2]}') as flag_day2,
+             WHERE user_id = u.id AND survey_date = '${dates[1]}') as flag_day2,
             (SELECT final_flag FROM survey_results 
-             WHERE user_id = u.id AND survey_date = '${dates[3]}') as flag_day3,
+             WHERE user_id = u.id AND survey_date = '${dates[2]}') as flag_day3,
             (SELECT final_flag FROM survey_results 
-             WHERE user_id = u.id AND survey_date = '${dates[4]}') as flag_day4,
+             WHERE user_id = u.id AND survey_date = '${dates[3]}') as flag_day4,
             (SELECT final_flag FROM survey_results 
-             WHERE user_id = u.id AND survey_date = '${dates[5]}') as flag_day5,
+             WHERE user_id = u.id AND survey_date = '${dates[4]}') as flag_day5,
             (SELECT final_flag FROM survey_results 
-             WHERE user_id = u.id AND survey_date = '${dates[6]}') as flag_day6
+             WHERE user_id = u.id AND survey_date = '${dates[5]}') as flag_day6
         FROM users u
         LEFT JOIN survey_results sr ON u.id = sr.user_id AND sr.survey_date = date('now')
         ${whereClause}
