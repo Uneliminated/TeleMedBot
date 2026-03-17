@@ -304,6 +304,16 @@ app.get('/api/users', requireAuth, (req,res) => {
         
         //Форматируем данные
         const users = rows.map(user => {
+            //Определяем балл на сегодня
+            let finalScore
+            if (user.final_score) {
+                finalScore = user.final_score
+            } else if (user.final_score === 0) {
+                finalScore = 0
+            } else {
+                finalScore = 'Нет'
+            }
+            
             // Определяем текст флага
             let flagText = user.final_flag
             if (!user.final_flag) {
@@ -331,7 +341,7 @@ app.get('/api/users', requireAuth, (req,res) => {
                 is_active: user.is_active === 1,
                 observation_end_date_formatted: user.observation_end_date ?
                     new Date(user.observation_end_date).toLocaleDateString('ru-RU') : 'Не указана',
-                final_score: user.final_score || 'Нет',
+                final_score: finalScore,
                 final_flag: flagText,
                 flags_history: flags_history
             }
