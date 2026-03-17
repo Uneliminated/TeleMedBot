@@ -401,7 +401,7 @@ function renderQuestionsTable(data) {
     }
     
     // Получаем все уникальные даты и сортируем их
-    const allDates = [...new Set(data.answers.map(item => item.date))].sort()
+    const allDates = [...new Set(data.answers.map(item => item.date))].sort().reverse()
     
     // Группируем ответы по вопросам
     const answersByQuestion = {}
