@@ -171,8 +171,8 @@
 
 /* Колонка с вопросами */
 .question-column {
-    min-width: 50px;
-    max-width: 100px;
+    min-width: 150px;
+    max-width: 200px;
     background: #fafafa;
     font-weight: 500;
     text-align: left;

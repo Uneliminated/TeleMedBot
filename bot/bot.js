@@ -784,7 +784,7 @@ async function sendDailySurveyToAllUsers() {
     }
 }
 
-// Настраиваем cron-задачу для ежедневной отправки в 12:00
+// Настраиваем cron-задачу для ежедневной отправки в 09:00
 schedule('0 9 * * *', async () => {
     console.log('Запуск автоматической отправки опросов (09:00)...');
     await sendDailySurveyToAllUsers();
@@ -1408,7 +1408,7 @@ bot.catch((err) => {
 // Запуск бота
 bot.start().then(() => {
     console.log('Бот запущен!');
-    console.log('Ежедневные опросы будут отправляться в 12:00 по времени сервера');
+    console.log('Ежедневные опросы будут отправляться в 09:00 по времени сервера');
     
     const users = userRepository.getAllUsers();
     const activeUsers = userRepository.getActiveUsers();
