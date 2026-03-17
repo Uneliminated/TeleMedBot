@@ -171,7 +171,8 @@
 
 /* Колонка с вопросами */
 .question-column {
-    min-width: 200px;
+    min-width: 150px;
+    width: 175px;
     max-width: 200px;
     background: #fafafa;
     font-weight: 500;
@@ -391,13 +392,16 @@
     .question-column {
         font-size: 0.9rem;
         min-width: 150px;
-        max-width: 200px;
+        width: 150px;
+        max-width: 150px;
     }
     
     .date-column {
         min-width: 80px;
         width: 100px;
         max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .answer-cell {
